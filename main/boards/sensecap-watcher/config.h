@@ -140,7 +140,6 @@
 #define BSP_BAT_ADC_ATTEN (ADC_ATTEN_DB_2_5) // 0 ~ 1100 mV
 #define BSP_BAT_VOL_RATIO ((62 + 20) / 20)
 
-<<<<<<< HEAD
 // /* Camera pins */
 // #define CAMERA_PIN_PWDN -1
 // #define CAMERA_PIN_RESET -1
@@ -215,7 +214,7 @@
 #define CAMERA_PIN_PCLK     PCLK_GPIO_NUM
 
 #define XCLK_FREQ_HZ 20000000
-=======
+
 /* Himax */
 #define BSP_SSCMA_CLIENT_RST              (IO_EXPANDER_PIN_NUM_7)
 #define BSP_SSCMA_CLIENT_RST_USE_EXPANDER (true)
@@ -230,6 +229,5 @@
 #define BSP_SSCMA_FLASHER_UART_TX        (GPIO_NUM_17)
 #define BSP_SSCMA_FLASHER_UART_RX        (GPIO_NUM_18)
 #define BSP_SSCMA_FLASHER_UART_BAUD_RATE (921600)
->>>>>>> 218d0318feddcec6b73145920854480820675adb
 
 #endif // _BOARD_CONFIG_H_
