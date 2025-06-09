@@ -24,7 +24,7 @@
 /* DFRobot Camera pins */
 #define PWDN_GPIO_NUM       -1
 #define RESET_GPIO_NUM      -1
-#define XCLK_GPIO_NUM       5
+#define XCLK_GPIO_NUM       0
 #define Y9_GPIO_NUM         4
 #define Y8_GPIO_NUM         6
 #define Y7_GPIO_NUM         7

@@ -82,6 +82,12 @@
 #define DISPLAY_BACKLIGHT_PIN GPIO_NUM_8
 #define DISPLAY_BACKLIGHT_OUTPUT_INVERT false
 
+/* emoji play */
+#define FL_GPIO_NUM                 GPIO_NUM_21
+#define FR_GPIO_NUM                 GPIO_NUM_19
+#define BL_GPIO_NUM                 GPIO_NUM_20
+#define BR_GPIO_NUM                 GPIO_NUM_18
+
 /* Touch */
 #define BSP_TOUCH_I2C_NUM  (1)
 #define BSP_TOUCH_GPIO_INT (IO_EXPANDER_PIN_NUM_5)
@@ -102,5 +108,80 @@
 #define BSP_BAT_ADC_CHAN  (ADC_CHANNEL_2)    // GPIO3
 #define BSP_BAT_ADC_ATTEN (ADC_ATTEN_DB_2_5) // 0 ~ 1100 mV
 #define BSP_BAT_VOL_RATIO ((62 + 20) / 20)
+
+// /* Camera pins */
+// #define CAMERA_PIN_PWDN -1
+// #define CAMERA_PIN_RESET -1
+// #define CAMERA_PIN_XCLK 40
+// #define CAMERA_PIN_SIOD 17
+// #define CAMERA_PIN_SIOC 18
+
+// #define CAMERA_PIN_D7 39
+// #define CAMERA_PIN_D6 41
+// #define CAMERA_PIN_D5 42
+// #define CAMERA_PIN_D4 12
+// #define CAMERA_PIN_D3 3
+// #define CAMERA_PIN_D2 14
+// #define CAMERA_PIN_D1 47
+// #define CAMERA_PIN_D0 13
+// #define CAMERA_PIN_VSYNC 21
+// #define CAMERA_PIN_HREF 38
+// #define CAMERA_PIN_PCLK 11
+
+/* OV5647  Camera pins */
+// #define PWDN_GPIO_NUM       -1
+// #define RESET_GPIO_NUM      -1
+// #define XCLK_GPIO_NUM       0
+// #define Y9_GPIO_NUM         35
+// #define Y8_GPIO_NUM         34
+// #define Y7_GPIO_NUM         39
+// #define Y6_GPIO_NUM         36
+// #define Y5_GPIO_NUM         21
+// #define Y4_GPIO_NUM         19
+// #define Y3_GPIO_NUM         18
+// #define Y2_GPIO_NUM         5
+// #define VSYNC_GPIO_NUM      1
+// #define HREF_GPIO_NUM       23
+// #define PCLK_GPIO_NUM       22
+// #define SIOD_GPIO_NUM       26
+// #define SIOC_GPIO_NUM       27
+
+#define PWDN_GPIO_NUM       -1
+#define RESET_GPIO_NUM      -1
+#define XCLK_GPIO_NUM       10
+#define Y9_GPIO_NUM         48
+#define Y8_GPIO_NUM         11
+#define Y7_GPIO_NUM         12
+#define Y6_GPIO_NUM         14
+#define Y5_GPIO_NUM         16
+#define Y4_GPIO_NUM         18
+#define Y3_GPIO_NUM         17
+#define Y2_GPIO_NUM         15
+#define VSYNC_GPIO_NUM      38
+#define HREF_GPIO_NUM       47
+#define PCLK_GPIO_NUM       13
+#define SIOD_GPIO_NUM       40
+#define SIOC_GPIO_NUM       39
+
+/* Camera pins */
+#define CAMERA_PIN_PWDN     PWDN_GPIO_NUM
+#define CAMERA_PIN_RESET    RESET_GPIO_NUM
+#define CAMERA_PIN_XCLK     XCLK_GPIO_NUM
+#define CAMERA_PIN_SIOD     SIOD_GPIO_NUM
+#define CAMERA_PIN_SIOC     SIOC_GPIO_NUM
+
+#define CAMERA_PIN_D7       Y9_GPIO_NUM
+#define CAMERA_PIN_D6       Y8_GPIO_NUM
+#define CAMERA_PIN_D5       Y7_GPIO_NUM
+#define CAMERA_PIN_D4       Y6_GPIO_NUM
+#define CAMERA_PIN_D3       Y5_GPIO_NUM
+#define CAMERA_PIN_D2       Y4_GPIO_NUM
+#define CAMERA_PIN_D1       Y3_GPIO_NUM
+#define CAMERA_PIN_D0       Y2_GPIO_NUM
+#define CAMERA_PIN_VSYNC    VSYNC_GPIO_NUM
+#define CAMERA_PIN_HREF     HREF_GPIO_NUM
+#define CAMERA_PIN_PCLK     PCLK_GPIO_NUM
+
+#define XCLK_FREQ_HZ 20000000
 
 #endif // _BOARD_CONFIG_H_

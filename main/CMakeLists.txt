@@ -267,7 +267,8 @@ add_custom_target(lang_header ALL
     DEPENDS ${LANG_HEADER}
 )
 
-if(CONFIG_BOARD_TYPE_ESP_HI)
+# if(CONFIG_BOARD_TYPE_ESP_HI)
+if(CONFIG_BOARD_TYPE_SENSECAP_WATCHER)
 set(URL "https://github.com/espressif2022/image_player/raw/main/test_apps/test_8bit")
 set(SPIFFS_DIR "${CMAKE_BINARY_DIR}/emoji")
 file(MAKE_DIRECTORY ${SPIFFS_DIR})

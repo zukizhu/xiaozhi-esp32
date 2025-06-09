@@ -29,7 +29,14 @@
 #include <esp_mac.h>
 #include <nvs_flash.h>
 
+#include "esp_lcd_ili9341.h"
 #include "assets/lang_config.h"
+#include "anim_player.h"
+#include "emoji_display.h"
+#include "servo_dog_ctrl.h"
+
+#include "esp32_camera.h"
+#include "himax6538.h"
 
 #define TAG "sensecap_watcher"
 
@@ -88,6 +95,7 @@ class SensecapWatcher : public WifiBoard {
 private:
     i2c_master_bus_handle_t i2c_bus_;
     LcdDisplay* display_;
+    // anim::EmojiWidget* display_ = nullptr;
     std::unique_ptr<Knob> knob_;
     esp_io_expander_handle_t io_exp_handle;
     button_handle_t btns;
@@ -97,20 +105,31 @@ private:
     uint32_t long_press_cnt_;
     button_driver_t* btn_driver_ = nullptr;
     static SensecapWatcher* instance_;
+    Esp32Camera* camera_ = nullptr;
+    Himax6538* himax_;
 
     void InitializePowerSaveTimer() {
-        power_save_timer_ = new PowerSaveTimer(-1, 60, 300);
+        power_save_timer_ = new PowerSaveTimer(-1, 30, -1);
         power_save_timer_->OnEnterSleepMode([this]() {
             ESP_LOGI(TAG, "Enabling sleep mode");
             auto display = GetDisplay();
             display->SetChatMessage("system", "");
             display->SetEmotion("sleepy");
+
+            // ESP_LOGI(TAG, "EnterSleepMode:Create emoji widget, panel: %p, panel_io: %p", panel_, panel_io_);
+            // auto display_ = GetDisplay();
+            // display_->SetEmotion("sleepy");
             GetBacklight()->SetBrightness(10);
         });
         power_save_timer_->OnExitSleepMode([this]() {
             auto display = GetDisplay();
             display->SetChatMessage("system", "");
             display->SetEmotion("neutral");
+
+            // ESP_LOGI(TAG, "ExitSleepMode:Create emoji widget, panel: %p, panel_io: %p", panel_, panel_io_);
+            // auto display_ = GetDisplay();
+            // display_->SetEmotion("happy");
+    
             GetBacklight()->RestoreBrightness();
         });
         power_save_timer_->OnShutdownRequest([this]() {
@@ -329,6 +348,7 @@ private:
             .bits_per_pixel = DRV_LCD_BITS_PER_PIXEL,
             .vendor_config = &vendor_config,
         };
+
         esp_lcd_new_panel_spd2010(panel_io_, &panel_config, &panel_);
 
         esp_lcd_panel_reset(panel_);
@@ -339,6 +359,32 @@ private:
         display_ = new CustomLcdDisplay(panel_io_, panel_,
             DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
         
+        // emoji display
+        // ESP_ERROR_CHECK(esp_lcd_new_panel_ili9341(panel_io_, &panel_config, &panel_));
+        // esp_lcd_panel_reset(panel_);
+        // esp_lcd_panel_init(panel_);
+        // esp_lcd_panel_invert_color(panel_, true);
+        // esp_lcd_panel_invert_color(panel_, false);
+        // esp_lcd_panel_set_gap(panel_, 0, 24);
+        // esp_lcd_panel_mirror(panel_, DISPLAY_MIRROR_X, true);
+        // esp_lcd_panel_swap_xy(panel_, false);
+        // ESP_LOGI(TAG, "LCD panel create success, %p", panel_);
+
+        // esp_lcd_panel_disp_on_off(panel_, true);
+
+        // ESP_LOGI(TAG, "init:Create emoji widget, panel: %p, panel_io: %p", panel_, panel_io_);
+        // display_ = new anim::EmojiWidget(panel_, panel_io_);
+
+//         servo_dog_ctrl_config_t config = {
+//             .fl_gpio_num = FL_GPIO_NUM,
+//             .fr_gpio_num = FR_GPIO_NUM,
+//             .bl_gpio_num = BL_GPIO_NUM,
+//             .br_gpio_num = BR_GPIO_NUM,
+//         };
+// #if CONFIG_ESP_CONSOLE_NONE
+//         servo_dog_ctrl_init(&config);
+// #endif
+
         // 使每次刷新的起始列数索引是4的倍数且列数总数是4的倍数，以满足SPD2010的要求
         lv_display_add_event_cb(lv_display_get_default(), [](lv_event_t *e) {
             lv_area_t *area = (lv_area_t *)lv_event_get_param(e);
@@ -349,7 +395,49 @@ private:
             // round the end of area up to the nearest 4M+3 number
             area->x2 = ((x2 >> 2) << 2) + 3;
         }, LV_EVENT_INVALIDATE_AREA, NULL);
+
         
+    }
+
+    void InitializeCamera() {
+        // Open camera power
+
+        camera_config_t config = {};
+        config.ledc_channel = LEDC_CHANNEL_2;  // LEDC通道选择  用于生成XCLK时钟 但是S3不用
+        config.ledc_timer = LEDC_TIMER_2; // LEDC timer选择  用于生成XCLK时钟 但是S3不用
+        config.pin_d0 = CAMERA_PIN_D0;
+        config.pin_d1 = CAMERA_PIN_D1;
+        config.pin_d2 = CAMERA_PIN_D2;
+        config.pin_d3 = CAMERA_PIN_D3;
+        config.pin_d4 = CAMERA_PIN_D4;
+        config.pin_d5 = CAMERA_PIN_D5;
+        config.pin_d6 = CAMERA_PIN_D6;
+        config.pin_d7 = CAMERA_PIN_D7;
+        config.pin_xclk = CAMERA_PIN_XCLK;
+        config.pin_pclk = CAMERA_PIN_PCLK;
+        config.pin_vsync = CAMERA_PIN_VSYNC;
+        config.pin_href = CAMERA_PIN_HREF;
+        config.pin_sccb_sda = -1;   // 这里写-1 表示使用已经初始化的I2C接口
+        config.pin_sccb_scl = CAMERA_PIN_SIOC;
+        config.sccb_i2c_port = 1;
+        config.pin_pwdn = CAMERA_PIN_PWDN;
+        config.pin_reset = CAMERA_PIN_RESET;
+        config.xclk_freq_hz = XCLK_FREQ_HZ;
+        config.pixel_format = PIXFORMAT_RGB565;
+        config.frame_size = FRAMESIZE_VGA;
+        config.jpeg_quality = 12;
+        config.fb_count = 1;
+        config.fb_location = CAMERA_FB_IN_PSRAM;
+        config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
+
+        camera_ = new Esp32Camera(config);
+    }
+
+    // 初始化 Himax 638 AI摄像头 
+    void InitializeHimax6538(){
+        himax_ = new Himax6538();
+        himax_->Setup_Himax_task();
+
     }
 
     // 物联网初始化，添加对 AI 可见设备
@@ -514,6 +602,8 @@ public:
         Initializespd2010Display();
         InitializeIot();
         GetBacklight()->RestoreBrightness();
+        // InitializeHimax6538();
+        // InitializeCamera();
     }
 
     virtual AudioCodec* GetAudioCodec() override {
@@ -537,6 +627,14 @@ public:
         return display_;
     }
     
+    virtual Camera* GetCamera() override {
+        return camera_;
+    }
+
+    // virtual Himax6538* GetHimax() override {
+    //     return himax_;
+    // }
+
     virtual Backlight* GetBacklight() override {
         static PwmBacklight backlight(DISPLAY_BACKLIGHT_PIN, DISPLAY_BACKLIGHT_OUTPUT_INVERT);
         return &backlight;

@@ -57,7 +57,7 @@ dependencies:
   lijunru-hub/servo_dog_ctrl:
     version: '^0.1.5'
     rules:
-    - if: target in [esp32c3]
+    - if: target in [esp32c3,esp32s3]
 
   ## Required IDF version
   idf:
