@@ -4,7 +4,7 @@
 #include "driver/uart.h"
 #include "driver/gpio.h"
 
-#define UART_PORT UART_NUM_1
+#define UART_PORT UART_NUM_2
 #define BUF_SIZE (1024)
 
 class Himax6538 {
