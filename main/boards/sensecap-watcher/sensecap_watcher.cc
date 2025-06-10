@@ -37,7 +37,6 @@
 #include "servo_dog_ctrl.h"
 
 #include "esp32_camera.h"
-#include "himax6538.h"
 
 #define TAG "sensecap_watcher"
 
@@ -107,7 +106,6 @@ private:
     button_driver_t* btn_driver_ = nullptr;
     static SensecapWatcher* instance_;
     // Esp32Camera* camera_ = nullptr;
-    Himax6538* himax_;
     SscmaCamera* camera_ = nullptr;
 
     void InitializePowerSaveTimer() {
@@ -283,6 +281,16 @@ private:
             self->power_save_timer_->WakeUp();
             app.ToggleChatState();
         }, this);
+
+        iot_button_register_cb(btns,BUTTON_DOUBLE_CLICK, nullptr, [](void* button_handle, void* usr_data) {
+            auto self = static_cast<SensecapWatcher*>(usr_data);
+            self->power_save_timer_->WakeUp();
+            auto camera = self->GetCamera();
+            if (!camera) {
+                ESP_LOGW(TAG, "Camera is not available");
+            }
+            
+        }, this);
         
         iot_button_register_cb(btns, BUTTON_LONG_PRESS_START, nullptr, [](void* button_handle, void* usr_data) {
             auto self = static_cast<SensecapWatcher*>(usr_data);
@@ -412,13 +420,6 @@ private:
         }, LV_EVENT_INVALIDATE_AREA, NULL);
 
         
-    }
-
-    // 初始化 Himax 638 AI摄像头 
-    void InitializeHimax6538(){
-        himax_ = new Himax6538();
-        himax_->Setup_Himax_task();
-
     }
 
     // 物联网初始化，添加对 AI 可见设备
@@ -565,6 +566,23 @@ private:
         };
         ESP_ERROR_CHECK(esp_console_cmd_register(&cmd5));
 
+        const esp_console_cmd_t cmd6 = {
+            .command = "capture",
+            .help = "Get camera capture",
+            .hint = NULL,
+            .func = NULL,
+            .argtable = NULL,
+            .func_w_context = [](void *context,int argc, char** argv) -> int {
+                auto self = static_cast<SensecapWatcher*>(context);
+                self->power_save_timer_->WakeUp();
+                self->GetCamera()->Capture();
+                return 0;
+            },
+            .context = this
+        };
+
+        ESP_ERROR_CHECK(esp_console_cmd_register(&cmd6));
+
         esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
         ESP_ERROR_CHECK(esp_console_new_repl_uart(&hw_config, &repl_config, &repl));
         ESP_ERROR_CHECK(esp_console_start_repl(repl));
@@ -605,7 +623,6 @@ public:
         InitializeCamera();
         InitializeIot();
         GetBacklight()->RestoreBrightness();
-        // InitializeHimax6538();
     }
 
     virtual AudioCodec* GetAudioCodec() override {
@@ -632,10 +649,6 @@ public:
     virtual Camera* GetCamera() override {
         return camera_;
     }
-
-    // virtual Himax6538* GetHimax() override {
-    //     return himax_;
-    // }
 
     virtual Backlight* GetBacklight() override {
         static PwmBacklight backlight(DISPLAY_BACKLIGHT_PIN, DISPLAY_BACKLIGHT_OUTPUT_INVERT);

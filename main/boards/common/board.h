@@ -10,7 +10,6 @@
 #include "led/led.h"
 #include "backlight.h"
 #include "camera.h"
-#include "himax6538.h"
 
 void* create_board();
 class AudioCodec;
@@ -42,7 +41,6 @@ public:
     virtual bool GetTemperature(float& esp32temp);
     virtual Display* GetDisplay();
     virtual Camera* GetCamera();
-    // virtual Himax6538* GetHimax(); // 可选，部分板子没有
     virtual Http* CreateHttp() = 0;
     virtual WebSocket* CreateWebSocket() = 0;
     virtual Mqtt* CreateMqtt() = 0;

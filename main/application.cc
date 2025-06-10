@@ -480,6 +480,7 @@ void Application::Start() {
     protocol_->OnIncomingJson([this, display](const cJSON* root) {
         // Parse JSON data
         auto type = cJSON_GetObjectItem(root, "type");
+        ESP_LOGI(TAG, "OnIncomingJson() Received message type: %s", type ? type->valuestring : "unknown");
         if (strcmp(type->valuestring, "tts") == 0) {
             auto state = cJSON_GetObjectItem(root, "state");
             if (strcmp(state->valuestring, "start") == 0) {

@@ -140,25 +140,6 @@
 #define BSP_BAT_ADC_ATTEN (ADC_ATTEN_DB_2_5) // 0 ~ 1100 mV
 #define BSP_BAT_VOL_RATIO ((62 + 20) / 20)
 
-// /* Camera pins */
-// #define CAMERA_PIN_PWDN -1
-// #define CAMERA_PIN_RESET -1
-// #define CAMERA_PIN_XCLK 40
-// #define CAMERA_PIN_SIOD 17
-// #define CAMERA_PIN_SIOC 18
-
-// #define CAMERA_PIN_D7 39
-// #define CAMERA_PIN_D6 41
-// #define CAMERA_PIN_D5 42
-// #define CAMERA_PIN_D4 12
-// #define CAMERA_PIN_D3 3
-// #define CAMERA_PIN_D2 14
-// #define CAMERA_PIN_D1 47
-// #define CAMERA_PIN_D0 13
-// #define CAMERA_PIN_VSYNC 21
-// #define CAMERA_PIN_HREF 38
-// #define CAMERA_PIN_PCLK 11
-
 /* OV5647  Camera pins */
 // #define PWDN_GPIO_NUM       -1
 // #define RESET_GPIO_NUM      -1
