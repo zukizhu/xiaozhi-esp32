@@ -11,6 +11,7 @@
 #include "iot/thing_manager.h"
 #include "power_save_timer.h"
 #include "sscma_camera.h"
+#include "protocol.h"
 
 #include <esp_log.h>
 #include "esp_check.h"
@@ -97,6 +98,7 @@ private:
     LcdDisplay* display_;
     // anim::EmojiWidget* display_ = nullptr;
     std::unique_ptr<Knob> knob_;
+    std::unique_ptr<Protocol> protocol_;
     esp_io_expander_handle_t io_exp_handle;
     button_handle_t btns;
     PowerSaveTimer* power_save_timer_;
@@ -105,7 +107,6 @@ private:
     uint32_t long_press_cnt_;
     button_driver_t* btn_driver_ = nullptr;
     static SensecapWatcher* instance_;
-    // Esp32Camera* camera_ = nullptr;
     SscmaCamera* camera_ = nullptr;
 
     void InitializePowerSaveTimer() {
@@ -284,12 +285,20 @@ private:
 
         iot_button_register_cb(btns,BUTTON_DOUBLE_CLICK, nullptr, [](void* button_handle, void* usr_data) {
             auto self = static_cast<SensecapWatcher*>(usr_data);
-            self->power_save_timer_->WakeUp();
-            auto camera = self->GetCamera();
+            auto& app = Application::GetInstance();
+            if (app.GetDeviceState() == kDeviceStateStarting && !WifiStation::GetInstance().IsConnected()) {
+                self->ResetWifiConfiguration();
+            }
+            auto camera = instance_->GetCamera();
             if (!camera) {
                 ESP_LOGW(TAG, "Camera is not available");
             }
-            
+            self->power_save_timer_->WakeUp();
+            // self->ToggleCamaraState( );
+            app.ToggleChatState();
+
+            camera->Capture();
+            camera->Explain("分析这张照片");
         }, this);
         
         iot_button_register_cb(btns, BUTTON_LONG_PRESS_START, nullptr, [](void* button_handle, void* usr_data) {
@@ -315,6 +324,44 @@ private:
             }
         }, this);
     }
+
+    // void ToggleCamaraState() {
+    //     ESP_LOGI(TAG, "Toggle camera state");
+    //     auto& app = Application::GetInstance();
+    //     DeviceState device_state_ = app.GetDeviceState();
+    //     protocol_ = app.protocol_
+
+    //     if (device_state_ == kDeviceStateActivating) {
+    //         app.SetDeviceState(kDeviceStateIdle);
+    //         return;
+    //     }
+
+    //     if (!protocol_) {
+    //         ESP_LOGE(TAG, "Protocol not initialized");
+    //         return;
+    //     }
+
+    //     if (device_state_ == kDeviceStateIdle) {
+    //         Schedule([this]() {
+    //             if (!protocol_.IsAudioChannelOpened()) {
+    //                 app.SetDeviceState(kDeviceStateConnecting);
+    //                 if (!protocol_.OpenAudioChannel()) {
+    //                     return;
+    //                 }
+    //             }
+
+    //             app.SetListeningMode(app.aec_mode_ == kAecOff ? kListeningModeAutoStop : kListeningModeRealtime);
+    //         });
+    //     } else if (device_state_ == kDeviceStateSpeaking) {
+    //         Schedule([this]() {
+    //             app.AbortSpeaking(kAbortReasonNone);
+    //         });
+    //     } else if (device_state_ == kDeviceStateListening) {
+    //         Schedule([this]() {
+    //             protocol_.CloseAudioChannel();
+    //         });
+    //     }
+    // }
 
     void InitializeSpi() {
         ESP_LOGI(TAG, "Initialize SSCMA SPI bus");
