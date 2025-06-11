@@ -1025,6 +1025,7 @@ void Application::WakeWordInvoke(const std::string& wake_word) {
         ToggleChatState();
         Schedule([this, wake_word]() {
             if (protocol_) {
+                ESP_LOGI(TAG, "Wake word detected: %s", wake_word.c_str());
                 protocol_->SendWakeWordDetected(wake_word); 
             }
         }); 

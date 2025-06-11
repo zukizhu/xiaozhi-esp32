@@ -90,12 +90,30 @@ class CustomLcdDisplay : public SpiLcdDisplay {
             lv_obj_set_width(low_battery_label_, LV_HOR_RES * 0.75);
             lv_label_set_long_mode(low_battery_label_, LV_LABEL_LONG_SCROLL_CIRCULAR);
         }
+
+        #if CONFIG_BOARD_TYPE_SENSECAP_WATCHER
+        // 重写 自定义输出消息内容
+        void setChatMessage(const char* role, const char* content) override {
+            DisplayLockGuard lock(this);
+            // if (content_ != nullptr ) {
+            //     lv_obj_add_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN);
+            // }
+                
+            if (chat_message_label_) {
+                std::string message = std::string(role) + ": " + content;
+                ESP_LOGI(TAG, "Setting chat message: %s", message.c_str());
+                lv_label_set_text(chat_message_label_, message.c_str());
+                // lv_obj_align(chat_message_label_, LV_ALIGN_BOTTOM_MID, 0, -10);
+            }
+        }
+        #endif
 };
 
 class SensecapWatcher : public WifiBoard {
 private:
     i2c_master_bus_handle_t i2c_bus_;
-    LcdDisplay* display_;
+    // LcdDisplay* display_;
+    CustomLcdDisplay* display_;
     // anim::EmojiWidget* display_ = nullptr;
     std::unique_ptr<Knob> knob_;
     std::unique_ptr<Protocol> protocol_;
@@ -294,11 +312,11 @@ private:
                 ESP_LOGW(TAG, "Camera is not available");
             }
             self->power_save_timer_->WakeUp();
-            // self->ToggleCamaraState( );
             app.ToggleChatState();
-
-            camera->Capture();
-            camera->Explain("分析这张照片");
+            app.WakeWordInvoke("拍个照片");
+            // camera->Capture();
+            // camera->Explain("分析这张照片");
+            
         }, this);
         
         iot_button_register_cb(btns, BUTTON_LONG_PRESS_START, nullptr, [](void* button_handle, void* usr_data) {
@@ -622,7 +640,9 @@ private:
             .func_w_context = [](void *context,int argc, char** argv) -> int {
                 auto self = static_cast<SensecapWatcher*>(context);
                 self->power_save_timer_->WakeUp();
-                self->GetCamera()->Capture();
+                Application& app = Application::GetInstance();
+                app.ToggleChatState();
+                app.WakeWordInvoke("拍个照片");
                 return 0;
             },
             .context = this

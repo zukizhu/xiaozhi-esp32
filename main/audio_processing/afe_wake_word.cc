@@ -122,6 +122,7 @@ void AfeWakeWord::AudioDetectionTask() {
 
         // Store the wake word data for voice recognition, like who is speaking
         StoreWakeWordData(res->data, res->data_size / sizeof(int16_t));
+        // ESP_LOGI(TAG, "Fetched %d samples for wake word detection", res->data_size / sizeof(int16_t));
 
         if (res->wakeup_state == WAKENET_DETECTED) {
             StopDetection();

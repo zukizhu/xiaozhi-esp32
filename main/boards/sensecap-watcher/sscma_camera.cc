@@ -90,7 +90,7 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
             info->id ? info->id : "NULL", 
             info->name ? info->name : "NULL");
     }
-    sscma_client_set_sensor(sscma_client_handle_, 1, 3, true); // 3 = 640x480
+    sscma_client_set_sensor(sscma_client_handle_, 1, 3, true); // 3 = 640x480 
 
     // 初始化JPEG数据的内存
     jpeg_data_.len = 0;
@@ -186,7 +186,7 @@ bool SscmaCamera::Capture() {
         return false;
     }
 
-    ESP_LOGI(TAG, "Capturing image...");
+    // ESP_LOGI(TAG, "Capturing image...");
 
     // himax 有缓存数据,需要拍两张照片, 只获取最新的照片即可.
     if (sscma_client_sample(sscma_client_handle_, 2) ) {
