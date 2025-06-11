@@ -148,6 +148,21 @@ SpiLcdDisplay::SpiLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_h
     SetupUI();
 }
 
+#if CONFIG_BOARD_TYPE_SENSECAP_WATCHER
+//虚函数重写站位
+void LcdDisplay::SetChatMessage(const char* role, const char* content) {
+    //do nothing, this is a placeholder for compatibility
+    //zuki 
+    ESP_LOGI(TAG, "LcdDisplay:SetChatMessage role: %s, content: %s", role, content);
+}
+
+void SpiLcdDisplay::SetChatMessage(const char* role, const char* content) {
+    //zuki
+    ESP_LOGI(TAG, "SpiLcdDisplay:SetChatMessage role: %s, content: %s", role, content);
+    //do nothing, this is a placeholder for compatibility
+}
+#endif
+
 // RGB LCD实现
 RgbLcdDisplay::RgbLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel,
                            int width, int height, int offset_x, int offset_y,
@@ -827,10 +842,10 @@ void LcdDisplay::SetPreviewImage(const lv_img_dsc_t* img_dsc) {
         if (emotion_label_ != nullptr) {
             lv_obj_add_flag(emotion_label_, LV_OBJ_FLAG_HIDDEN);
         }
-        //隐藏 chat_message_label_
-        if (chat_message_label_ != nullptr) {
-            lv_obj_add_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN);
-        }
+        // //隐藏 chat_message_label_
+        // if (chat_message_label_ != nullptr) {
+        //     lv_obj_add_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN);
+        // }
 
     } else {
         // 隐藏预览图片并显示emotion_label_

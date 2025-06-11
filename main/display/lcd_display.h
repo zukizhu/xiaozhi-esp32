@@ -84,8 +84,9 @@ public:
                   int width, int height, int offset_x, int offset_y,
                   bool mirror_x, bool mirror_y, bool swap_xy,
                   DisplayFonts fonts);
+#if CONFIG_BOARD_TYPE_SENSECAP_WATCHER           
     virtual void SetChatMessage(const char* role, const char* content) override ;
-
+#endif
 };
 
 // QSPI LCD显示器

@@ -93,18 +93,25 @@ class CustomLcdDisplay : public SpiLcdDisplay {
 
         #if CONFIG_BOARD_TYPE_SENSECAP_WATCHER
         // 重写 自定义输出消息内容
-        void setChatMessage(const char* role, const char* content) override {
+        void setChatMessage(const char* role, const char* content)  {
             DisplayLockGuard lock(this);
-            // if (content_ != nullptr ) {
-            //     lv_obj_add_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN);
-            // }
-                
-            if (chat_message_label_) {
-                std::string message = std::string(role) + ": " + content;
-                ESP_LOGI(TAG, "Setting chat message: %s", message.c_str());
-                lv_label_set_text(chat_message_label_, message.c_str());
-                // lv_obj_align(chat_message_label_, LV_ALIGN_BOTTOM_MID, 0, -10);
+            
+            // lv_obj_set_hidden(chat_message_label_, false);
+
+            if (chat_message_label_ == nullptr) {
+                lv_obj_add_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN);
             }
+            
+            std::string message = std::string(role) + ": " + content;
+            ESP_LOGI(TAG, "Setting chat message: %s", message.c_str());
+
+            //处理message以“%”号开头的情况
+            if (message.empty() || message[0] == '%') {
+               return; // 如果消息为空或以“%”开头，则不显示
+            }
+
+            lv_label_set_text(chat_message_label_, message.c_str());
+            
         }
         #endif
 };
@@ -112,8 +119,8 @@ class CustomLcdDisplay : public SpiLcdDisplay {
 class SensecapWatcher : public WifiBoard {
 private:
     i2c_master_bus_handle_t i2c_bus_;
-    // LcdDisplay* display_;
-    CustomLcdDisplay* display_;
+    LcdDisplay* display_;
+    // CustomLcdDisplay* display_;
     // anim::EmojiWidget* display_ = nullptr;
     std::unique_ptr<Knob> knob_;
     std::unique_ptr<Protocol> protocol_;
@@ -312,7 +319,7 @@ private:
                 ESP_LOGW(TAG, "Camera is not available");
             }
             self->power_save_timer_->WakeUp();
-            app.ToggleChatState();
+            // app.ToggleChatState();
             app.WakeWordInvoke("拍个照片");
             // camera->Capture();
             // camera->Explain("分析这张照片");
@@ -342,44 +349,6 @@ private:
             }
         }, this);
     }
-
-    // void ToggleCamaraState() {
-    //     ESP_LOGI(TAG, "Toggle camera state");
-    //     auto& app = Application::GetInstance();
-    //     DeviceState device_state_ = app.GetDeviceState();
-    //     protocol_ = app.protocol_
-
-    //     if (device_state_ == kDeviceStateActivating) {
-    //         app.SetDeviceState(kDeviceStateIdle);
-    //         return;
-    //     }
-
-    //     if (!protocol_) {
-    //         ESP_LOGE(TAG, "Protocol not initialized");
-    //         return;
-    //     }
-
-    //     if (device_state_ == kDeviceStateIdle) {
-    //         Schedule([this]() {
-    //             if (!protocol_.IsAudioChannelOpened()) {
-    //                 app.SetDeviceState(kDeviceStateConnecting);
-    //                 if (!protocol_.OpenAudioChannel()) {
-    //                     return;
-    //                 }
-    //             }
-
-    //             app.SetListeningMode(app.aec_mode_ == kAecOff ? kListeningModeAutoStop : kListeningModeRealtime);
-    //         });
-    //     } else if (device_state_ == kDeviceStateSpeaking) {
-    //         Schedule([this]() {
-    //             app.AbortSpeaking(kAbortReasonNone);
-    //         });
-    //     } else if (device_state_ == kDeviceStateListening) {
-    //         Schedule([this]() {
-    //             protocol_.CloseAudioChannel();
-    //         });
-    //     }
-    // }
 
     void InitializeSpi() {
         ESP_LOGI(TAG, "Initialize SSCMA SPI bus");
