@@ -148,20 +148,6 @@ SpiLcdDisplay::SpiLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_h
     SetupUI();
 }
 
-#if CONFIG_BOARD_TYPE_SENSECAP_WATCHER
-//虚函数重写站位
-void LcdDisplay::SetChatMessage(const char* role, const char* content) {
-    //do nothing, this is a placeholder for compatibility
-    //zuki 
-    ESP_LOGI(TAG, "LcdDisplay:SetChatMessage role: %s, content: %s", role, content);
-}
-
-void SpiLcdDisplay::SetChatMessage(const char* role, const char* content) {
-    //zuki
-    ESP_LOGI(TAG, "SpiLcdDisplay:SetChatMessage role: %s, content: %s", role, content);
-    //do nothing, this is a placeholder for compatibility
-}
-#endif
 
 // RGB LCD实现
 RgbLcdDisplay::RgbLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel,
@@ -855,6 +841,7 @@ void LcdDisplay::SetPreviewImage(const lv_img_dsc_t* img_dsc) {
         }
     }
 }
+
 #endif
 
 void LcdDisplay::SetEmotion(const char* emotion) {

@@ -4,6 +4,7 @@
 #include "board.h"
 #include "system_info.h"
 #include "config.h"
+#include "lcd_display.h"
 
 #include <esp_log.h>
 #include <esp_heap_caps.h>
@@ -185,8 +186,8 @@ bool SscmaCamera::Capture() {
         ESP_LOGE(TAG, "SSCMA client handle is not initialized");
         return false;
     }
-
-    // ESP_LOGI(TAG, "Capturing image...");
+    //zuki added
+    ESP_LOGI(TAG, "Capturing image...");
 
     // himax 有缓存数据,需要拍两张照片, 只获取最新的照片即可.
     if (sscma_client_sample(sscma_client_handle_, 2) ) {

@@ -51,7 +51,7 @@ public:
     virtual void SetEmotion(const char* emotion) override;
     virtual void SetIcon(const char* icon) override;
     virtual void SetPreviewImage(const lv_img_dsc_t* img_dsc) override;
-#if CONFIG_USE_WECHAT_MESSAGE_STYLE or CONFIG_BOARD_TYPE_SENSECAP_WATCHER
+#if CONFIG_USE_WECHAT_MESSAGE_STYLE
     virtual void SetChatMessage(const char* role, const char* content) override; 
 #endif  
 
@@ -84,9 +84,6 @@ public:
                   int width, int height, int offset_x, int offset_y,
                   bool mirror_x, bool mirror_y, bool swap_xy,
                   DisplayFonts fonts);
-#if CONFIG_BOARD_TYPE_SENSECAP_WATCHER           
-    virtual void SetChatMessage(const char* role, const char* content) override ;
-#endif
 };
 
 // QSPI LCD显示器

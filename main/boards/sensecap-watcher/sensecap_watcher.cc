@@ -90,30 +90,6 @@ class CustomLcdDisplay : public SpiLcdDisplay {
             lv_obj_set_width(low_battery_label_, LV_HOR_RES * 0.75);
             lv_label_set_long_mode(low_battery_label_, LV_LABEL_LONG_SCROLL_CIRCULAR);
         }
-
-        #if CONFIG_BOARD_TYPE_SENSECAP_WATCHER
-        // 重写 自定义输出消息内容
-        void setChatMessage(const char* role, const char* content)  {
-            DisplayLockGuard lock(this);
-            
-            // lv_obj_set_hidden(chat_message_label_, false);
-
-            if (chat_message_label_ == nullptr) {
-                lv_obj_add_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN);
-            }
-            
-            std::string message = std::string(role) + ": " + content;
-            ESP_LOGI(TAG, "Setting chat message: %s", message.c_str());
-
-            //处理message以“%”号开头的情况
-            if (message.empty() || message[0] == '%') {
-               return; // 如果消息为空或以“%”开头，则不显示
-            }
-
-            lv_label_set_text(chat_message_label_, message.c_str());
-            
-        }
-        #endif
 };
 
 class SensecapWatcher : public WifiBoard {
