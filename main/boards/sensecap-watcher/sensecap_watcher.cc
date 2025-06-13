@@ -97,7 +97,7 @@ private:
     i2c_master_bus_handle_t i2c_bus_;
     LcdDisplay* display_;
     // CustomLcdDisplay* display_;
-    // anim::EmojiWidget* display_ = nullptr;
+    anim::EmojiWidget* display_emoji_ = nullptr;
     std::unique_ptr<Knob> knob_;
     std::unique_ptr<Protocol> protocol_;
     esp_io_expander_handle_t io_exp_handle;
@@ -391,32 +391,6 @@ private:
 
         display_ = new CustomLcdDisplay(panel_io_, panel_,
             DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
-        
-        // emoji display
-        // ESP_ERROR_CHECK(esp_lcd_new_panel_ili9341(panel_io_, &panel_config, &panel_));
-        // esp_lcd_panel_reset(panel_);
-        // esp_lcd_panel_init(panel_);
-        // esp_lcd_panel_invert_color(panel_, true);
-        // esp_lcd_panel_invert_color(panel_, false);
-        // esp_lcd_panel_set_gap(panel_, 0, 24);
-        // esp_lcd_panel_mirror(panel_, DISPLAY_MIRROR_X, true);
-        // esp_lcd_panel_swap_xy(panel_, false);
-        // ESP_LOGI(TAG, "LCD panel create success, %p", panel_);
-
-        // esp_lcd_panel_disp_on_off(panel_, true);
-
-        // ESP_LOGI(TAG, "init:Create emoji widget, panel: %p, panel_io: %p", panel_, panel_io_);
-        // display_ = new anim::EmojiWidget(panel_, panel_io_);
-
-//         servo_dog_ctrl_config_t config = {
-//             .fl_gpio_num = FL_GPIO_NUM,
-//             .fr_gpio_num = FR_GPIO_NUM,
-//             .bl_gpio_num = BL_GPIO_NUM,
-//             .br_gpio_num = BR_GPIO_NUM,
-//         };
-// #if CONFIG_ESP_CONSOLE_NONE
-//         servo_dog_ctrl_init(&config);
-// #endif
 
         // 使每次刷新的起始列数索引是4的倍数且列数总数是4的倍数，以满足SPD2010的要求
         lv_display_add_event_cb(lv_display_get_default(), [](lv_event_t *e) {
@@ -429,7 +403,65 @@ private:
             area->x2 = ((x2 >> 2) << 2) + 3;
         }, LV_EVENT_INVALIDATE_AREA, NULL);
 
-        
+    }
+
+    //zuki add:动画表情
+    void InitializeEmojiDisplay() {
+        ESP_LOGI(TAG, "Install panel IO");
+        const esp_lcd_panel_io_spi_config_t io_config = {
+            .cs_gpio_num = BSP_LCD_SPI_CS,
+            .dc_gpio_num = -1,
+            .spi_mode = 3,
+            .pclk_hz = DRV_LCD_PIXEL_CLK_HZ,
+            .trans_queue_depth = 2,
+            .lcd_cmd_bits = DRV_LCD_CMD_BITS,
+            .lcd_param_bits = DRV_LCD_PARAM_BITS,
+            .flags = {
+                .quad_mode = true,
+            },
+        };
+        spd2010_vendor_config_t vendor_config = {
+            .flags = {
+                .use_qspi_interface = 1,
+            },
+        };
+
+        esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)BSP_LCD_SPI_NUM, &io_config, &panel_io_);
+    
+        ESP_LOGD(TAG, "Install LCD driver");
+        const esp_lcd_panel_dev_config_t panel_config = {
+            .reset_gpio_num = BSP_LCD_GPIO_RST, // Shared with Touch reset
+            .rgb_ele_order = DRV_LCD_RGB_ELEMENT_ORDER,
+            .bits_per_pixel = DRV_LCD_BITS_PER_PIXEL,
+            .vendor_config = &vendor_config,
+        };
+
+        esp_lcd_new_panel_spd2010(panel_io_, &panel_config, &panel_);
+
+        esp_lcd_panel_reset(panel_);
+        esp_lcd_panel_init(panel_);
+        esp_lcd_panel_invert_color(panel_, true);
+        esp_lcd_panel_invert_color(panel_, false);
+        esp_lcd_panel_set_gap(panel_, 0, 24);
+        esp_lcd_panel_mirror(panel_, DISPLAY_MIRROR_X, true);
+        esp_lcd_panel_swap_xy(panel_, false);
+        ESP_LOGI(TAG, "LCD panel create success, %p", panel_);
+
+        esp_lcd_panel_disp_on_off(panel_, true);
+
+        ESP_LOGI(TAG, "init:Create emoji widget, panel: %p, panel_io: %p", panel_, panel_io_);
+        display_emoji_ = new anim::EmojiWidget(panel_, panel_io_);
+
+        // 使每次刷新的起始列数索引是4的倍数且列数总数是4的倍数，以满足SPD2010的要求
+        lv_display_add_event_cb(lv_display_get_default(), [](lv_event_t *e) {
+            lv_area_t *area = (lv_area_t *)lv_event_get_param(e);
+            uint16_t x1 = area->x1;
+            uint16_t x2 = area->x2;
+            // round the start of area down to the nearest 4N number
+            area->x1 = (x1 >> 2) << 2;
+            // round the end of area up to the nearest 4M+3 number
+            area->x2 = ((x2 >> 2) << 2) + 3;
+        }, LV_EVENT_INVALIDATE_AREA, NULL);   
     }
 
     // 物联网初始化，添加对 AI 可见设备
@@ -631,7 +663,8 @@ public:
         InitializeCmd();  //工厂生产测试使用
         InitializeButton();
         InitializeKnob();
-        Initializespd2010Display();
+        // Initializespd2010Display();
+        InitializeEmojiDisplay();
         InitializeCamera();
         InitializeIot();
         GetBacklight()->RestoreBrightness();
@@ -655,8 +688,19 @@ public:
     }
 
     virtual Display* GetDisplay() override {
-        return display_;
+        // return display_;
+        // return display_emoji_;
+        if(display_ == nullptr) {
+            ESP_LOGE(TAG, "display_emoji_ is  initialized");
+            return display_emoji_;
+        }
+        else
+        {
+            ESP_LOGE(TAG, "display_ is  initialized");
+            return display_;
+        }
     }
+
     
     virtual Camera* GetCamera() override {
         return camera_;
