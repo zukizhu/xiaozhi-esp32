@@ -203,6 +203,7 @@ if(CONFIG_USE_AUDIO_PROCESSOR)
 else()
     list(APPEND SOURCES "audio_processing/no_audio_processor.cc")
 endif()
+
 if(CONFIG_USE_AFE_WAKE_WORD)
     list(APPEND SOURCES "audio_processing/afe_wake_word.cc")
 elseif(CONFIG_USE_ESP_WAKE_WORD)
@@ -210,6 +211,10 @@ elseif(CONFIG_USE_ESP_WAKE_WORD)
 else()
     list(APPEND SOURCES "audio_processing/no_wake_word.cc")
 endif()
+
+# if(CONFIG_USE_WAKE_WORD_DETECT_NO_AFE)
+#     list(APPEND SOURCES "audio_processing/wake_word_no_afe.cc")
+# endif()
 
 # 根据Kconfig选择语言目录
 if(CONFIG_LANGUAGE_ZH_CN)
@@ -274,17 +279,27 @@ set(URL "https://github.com/espressif2022/image_player/raw/main/test_apps/test_8
 set(SPIFFS_DIR "${CMAKE_BINARY_DIR}/emoji")
 file(MAKE_DIRECTORY ${SPIFFS_DIR})
 
-# List all files to download
+# # List all files to download
+# set(FILES_TO_DOWNLOAD "")
+# list(APPEND FILES_TO_DOWNLOAD "Anger_enter.aaf" "Anger_loop.aaf" "Anger_return.aaf")
+# list(APPEND FILES_TO_DOWNLOAD "happy_enter.aaf" "happy_loop.aaf" "happ_return.aaf")
+# list(APPEND FILES_TO_DOWNLOAD "sad_enter.aaf" "sad_loop.aaf" "sad_return.aaf")
+# list(APPEND FILES_TO_DOWNLOAD "scorn_enter.aaf" "scorn_loop.aaf" "scorn_return.aaf")
+# list(APPEND FILES_TO_DOWNLOAD "left_enter.aaf" "left_loop.aaf" "left_return.aaf")
+# list(APPEND FILES_TO_DOWNLOAD "right_enter.aaf" "right_loop.aaf" "right_return.aaf")
+# list(APPEND FILES_TO_DOWNLOAD "asking.aaf" "blink_once.aaf" "blink_quick.aaf")
+# list(APPEND FILES_TO_DOWNLOAD "connecting.aaf" "panic_enter.aaf" "panic_loop.aaf")
+# list(APPEND FILES_TO_DOWNLOAD "panic_return.aaf" "wake.aaf")
+
+# List all files to download;only parts for sen
 set(FILES_TO_DOWNLOAD "")
-list(APPEND FILES_TO_DOWNLOAD "Anger_enter.aaf" "Anger_loop.aaf" "Anger_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "happy_enter.aaf" "happy_loop.aaf" "happ_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "sad_enter.aaf" "sad_loop.aaf" "sad_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "scorn_enter.aaf" "scorn_loop.aaf" "scorn_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "left_enter.aaf" "left_loop.aaf" "left_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "right_enter.aaf" "right_loop.aaf" "right_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "asking.aaf" "blink_once.aaf" "blink_quick.aaf")
-list(APPEND FILES_TO_DOWNLOAD "connecting.aaf" "panic_enter.aaf" "panic_loop.aaf")
-list(APPEND FILES_TO_DOWNLOAD "panic_return.aaf" "wake.aaf")
+list(APPEND FILES_TO_DOWNLOAD  "Anger_loop.aaf" )
+list(APPEND FILES_TO_DOWNLOAD  "happy_loop.aaf" )
+list(APPEND FILES_TO_DOWNLOAD  "sad_loop.aaf" )
+list(APPEND FILES_TO_DOWNLOAD  "scorn_loop.aaf" )
+list(APPEND FILES_TO_DOWNLOAD  "asking.aaf" "blink_quick.aaf")
+list(APPEND FILES_TO_DOWNLOAD  "connecting.aaf" "panic_loop.aaf")
+list(APPEND FILES_TO_DOWNLOAD  "wake.aaf" "sleep.aaf")
 
 foreach(FILENAME IN LISTS FILES_TO_DOWNLOAD)
     set(REMOTE_FILE "${URL}/${FILENAME}")

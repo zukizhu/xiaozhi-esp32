@@ -30,6 +30,7 @@
 #include <esp_console.h>
 #include <esp_mac.h>
 #include <nvs_flash.h>
+#include <esp_heap_caps.h>
 
 #include "esp_lcd_ili9341.h"
 #include "assets/lang_config.h"
@@ -44,6 +45,27 @@
 
 LV_FONT_DECLARE(font_puhui_30_4);
 LV_FONT_DECLARE(font_awesome_20_4);
+
+static const spd2010_lcd_init_cmd_t vendor_specific_init[] = {
+    {0x11, NULL, 0, 120},     // Sleep out, Delay 120ms
+    {0xB1, (uint8_t []){0x05, 0x3A, 0x3A}, 3, 0},
+    {0xB2, (uint8_t []){0x05, 0x3A, 0x3A}, 3, 0},
+    {0xB3, (uint8_t []){0x05, 0x3A, 0x3A, 0x05, 0x3A, 0x3A}, 6, 0},
+    {0xB4, (uint8_t []){0x03}, 1, 0},   // Dot inversion
+    {0xC0, (uint8_t []){0x44, 0x04, 0x04}, 3, 0},
+    {0xC1, (uint8_t []){0xC0}, 1, 0},
+    {0xC2, (uint8_t []){0x0D, 0x00}, 2, 0},
+    {0xC3, (uint8_t []){0x8D, 0x6A}, 2, 0},
+    {0xC4, (uint8_t []){0x8D, 0xEE}, 2, 0},
+    {0xC5, (uint8_t []){0x08}, 1, 0},
+    {0xE0, (uint8_t []){0x0F, 0x10, 0x03, 0x03, 0x07, 0x02, 0x00, 0x02, 0x07, 0x0C, 0x13, 0x38, 0x0A, 0x0E, 0x03, 0x10}, 16, 0},
+    {0xE1, (uint8_t []){0x10, 0x0B, 0x04, 0x04, 0x10, 0x03, 0x00, 0x03, 0x03, 0x09, 0x17, 0x33, 0x0B, 0x0C, 0x06, 0x10}, 16, 0},
+    {0x35, (uint8_t []){0x00}, 1, 0},
+    {0x3A, (uint8_t []){0x05}, 1, 0},
+    {0x36, (uint8_t []){0xC8}, 1, 0},
+    {0x29, NULL, 0, 0},     // Display on
+    {0x2C, NULL, 0, 0},     // Memory write
+};
 
 class CustomLcdDisplay : public SpiLcdDisplay {
     public:
@@ -95,7 +117,7 @@ class CustomLcdDisplay : public SpiLcdDisplay {
 class SensecapWatcher : public WifiBoard {
 private:
     i2c_master_bus_handle_t i2c_bus_;
-    LcdDisplay* display_;
+    LcdDisplay* display_ = nullptr;
     // CustomLcdDisplay* display_;
     anim::EmojiWidget* display_emoji_ = nullptr;
     std::unique_ptr<Knob> knob_;
@@ -104,43 +126,35 @@ private:
     button_handle_t btns;
     PowerSaveTimer* power_save_timer_;
     esp_lcd_panel_io_handle_t panel_io_ = nullptr;
-    esp_lcd_panel_handle_t panel_ = nullptr;
+    esp_lcd_panel_handle_t panel_ = nullptr;  //animation panel
+    esp_lcd_panel_handle_t panel_pic_ = nullptr;   //静态panel
     uint32_t long_press_cnt_;
     button_driver_t* btn_driver_ = nullptr;
     static SensecapWatcher* instance_;
     SscmaCamera* camera_ = nullptr;
 
     void InitializePowerSaveTimer() {
-        power_save_timer_ = new PowerSaveTimer(-1, 30, -1);
+        power_save_timer_ = new PowerSaveTimer(-1, 30, 180);
         power_save_timer_->OnEnterSleepMode([this]() {
             ESP_LOGI(TAG, "Enabling sleep mode");
             auto display = GetDisplay();
             display->SetChatMessage("system", "");
             display->SetEmotion("sleepy");
-
-            // ESP_LOGI(TAG, "EnterSleepMode:Create emoji widget, panel: %p, panel_io: %p", panel_, panel_io_);
-            // auto display_ = GetDisplay();
-            // display_->SetEmotion("sleepy");
             GetBacklight()->SetBrightness(10);
         });
         power_save_timer_->OnExitSleepMode([this]() {
             auto display = GetDisplay();
             display->SetChatMessage("system", "");
-            display->SetEmotion("neutral");
-
-            // ESP_LOGI(TAG, "ExitSleepMode:Create emoji widget, panel: %p, panel_io: %p", panel_, panel_io_);
-            // auto display_ = GetDisplay();
-            // display_->SetEmotion("happy");
-    
+            display->SetEmotion("neutral");    
             GetBacklight()->RestoreBrightness();
         });
         power_save_timer_->OnShutdownRequest([this]() {
-            ESP_LOGI(TAG, "Shutting down");
             bool is_charging = (IoExpanderGetLevel(BSP_PWR_VBUS_IN_DET) == 0);
             if (is_charging) {
-                ESP_LOGI(TAG, "charging");
+                // ESP_LOGI(TAG, "charging");
                 GetBacklight()->SetBrightness(0);
             } else {
+                ESP_LOGI(TAG, "Shutting down");
                 IoExpanderSetLevel(BSP_PWR_SYSTEM, 0);
             }
         });
@@ -413,16 +427,19 @@ private:
             .dc_gpio_num = -1,
             .spi_mode = 3,
             .pclk_hz = DRV_LCD_PIXEL_CLK_HZ,
-            .trans_queue_depth = 2,
+            .trans_queue_depth = 10,
             .lcd_cmd_bits = DRV_LCD_CMD_BITS,
             .lcd_param_bits = DRV_LCD_PARAM_BITS,
             .flags = {
                 .quad_mode = true,
             },
         };
+
         spd2010_vendor_config_t vendor_config = {
+            // .init_cmds = &vendor_specific_init[0],
+            // .init_cmds_size = sizeof(vendor_specific_init) / sizeof(spd2010_lcd_init_cmd_t),
             .flags = {
-                .use_qspi_interface = 1,
+                .use_qspi_interface = 1, // 使用 QSPI 接口
             },
         };
 
@@ -436,18 +453,30 @@ private:
             .vendor_config = &vendor_config,
         };
 
-        esp_lcd_new_panel_spd2010(panel_io_, &panel_config, &panel_);
+        ESP_ERROR_CHECK(esp_lcd_new_panel_spd2010(panel_io_, &panel_config, &panel_));
 
+        // ESP_ERROR_CHECK(esp_lcd_new_panel_spd2010(panel_io_, &panel_config, &panel_pic_));
+        
         esp_lcd_panel_reset(panel_);
         esp_lcd_panel_init(panel_);
         esp_lcd_panel_invert_color(panel_, true);
-        esp_lcd_panel_invert_color(panel_, false);
-        esp_lcd_panel_set_gap(panel_, 0, 24);
-        esp_lcd_panel_mirror(panel_, DISPLAY_MIRROR_X, true);
-        esp_lcd_panel_swap_xy(panel_, false);
-        ESP_LOGI(TAG, "LCD panel create success, %p", panel_);
+        // esp_lcd_panel_invert_color(panel_, false);
+        // esp_lcd_panel_set_gap(panel_, 0, 24);
+        esp_lcd_panel_set_gap(panel_, 0, 0);
+        esp_lcd_panel_mirror(panel_, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y);
+        esp_lcd_panel_swap_xy(panel_, DISPLAY_SWAP_XY);
+        ESP_LOGI(TAG, "LCD panel emoji create success, %p", panel_);
+        esp_lcd_panel_disp_on_off(panel_, true); // 打开动画显示
 
-        esp_lcd_panel_disp_on_off(panel_, true);
+        // esp_lcd_panel_reset(panel_pic_);
+        // esp_lcd_panel_init(panel_pic_);
+        // // esp_lcd_panel_invert_color(panel_pic_, true);
+        // esp_lcd_panel_invert_color(panel_, false);
+        // esp_lcd_panel_set_gap(panel_pic_, 0, 0);
+        // esp_lcd_panel_mirror(panel_pic_, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y);
+        // esp_lcd_panel_swap_xy(panel_pic_, DISPLAY_SWAP_XY);
+        // ESP_LOGI(TAG, "LCD panel pic create success, %p", panel_pic_);
+        // esp_lcd_panel_disp_on_off(panel_pic_, false); // 关闭图片显示
 
         ESP_LOGI(TAG, "init:Create emoji widget, panel: %p, panel_io: %p", panel_, panel_io_);
         display_emoji_ = new anim::EmojiWidget(panel_, panel_io_);
@@ -663,9 +692,9 @@ public:
         InitializeCmd();  //工厂生产测试使用
         InitializeButton();
         InitializeKnob();
+        InitializeCamera();
         // Initializespd2010Display();
         InitializeEmojiDisplay();
-        InitializeCamera();
         InitializeIot();
         GetBacklight()->RestoreBrightness();
     }
@@ -691,7 +720,7 @@ public:
         // return display_;
         // return display_emoji_;
         if(display_ == nullptr) {
-            ESP_LOGE(TAG, "display_emoji_ is  initialized");
+            // ESP_LOGE(TAG, "display_emoji_ is  initialized");
             return display_emoji_;
         }
         else

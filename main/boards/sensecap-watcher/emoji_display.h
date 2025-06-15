@@ -32,13 +32,16 @@ private:
     mmap_assets_handle_t assets_handle_;
 };
 
-class EmojiWidget : public Display {
+class EmojiWidget : public SpiLcdDisplay {
+
 public:
-    EmojiWidget(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t panel_io);
+    EmojiWidget(esp_lcd_panel_handle_t panel,esp_lcd_panel_io_handle_t panel_io);
     virtual ~EmojiWidget();
 
     virtual void SetEmotion(const char* emotion) override;
     virtual void SetStatus(const char* status) override;
+    virtual void SetPreviewImage(const lv_img_dsc_t* img_dsc) override;
+
     anim::EmojiPlayer* GetPlayer()
     {
         return player_.get();
@@ -48,6 +51,9 @@ private:
     void InitializePlayer(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t panel_io);
     virtual bool Lock(int timeout_ms = 0) override;
     virtual void Unlock() override;
+    esp_lcd_panel_handle_t panel_;
+    // esp_lcd_panel_handle_t panel_pic_ ;
+    // int panel_num_ = 0; // 0: panel, 1: panel_pic
 
     std::unique_ptr<anim::EmojiPlayer> player_;
 };

@@ -238,8 +238,8 @@ void Display::SetPreviewImage(const lv_img_dsc_t* image) {
 void Display::SetChatMessage(const char* role, const char* content) {
     ESP_LOGI(TAG, "Setting chat message: %s: %s", role, content);
 
-    if (content == nullptr || content[0] == '\0' || content[0] == '%') {
-        // 如果内容为空或以“%”开头，则不显示
+    //系统消息 和以“%”开头，则不显示 mcp工具调用消息不显示
+    if (content[0] == '%' or strcmp(role, "system") == 0) {
         return;
     }
 

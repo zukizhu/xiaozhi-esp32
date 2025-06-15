@@ -296,9 +296,26 @@ void Application::ToggleChatState() {
         return;
     }
 
-    if (!protocol_) {
-        ESP_LOGE(TAG, "Protocol not initialized");
-        return;
+    //zuki 重启对话需要重建
+    if (!protocol_ ) 
+    {
+        if(device_state_ == kDeviceStateListening || device_state_ == kDeviceStateSpeaking) 
+        {
+            if(protocol_->Start())
+            {
+                ESP_LOGI(TAG, "Protocol started");
+            }
+            else
+            {
+                ESP_LOGE(TAG, "Failed to start protocol");
+                return;
+            }
+        }
+        else
+        {
+            ESP_LOGE(TAG, "Protocol not initialized");
+            return;
+        }
     }
 
     if (device_state_ == kDeviceStateIdle) {
@@ -329,9 +346,26 @@ void Application::StartListening() {
         return;
     }
 
-    if (!protocol_) {
-        ESP_LOGE(TAG, "Protocol not initialized");
-        return;
+     //zuki 重启对话需要重建
+    if (!protocol_ ) 
+    {
+        if(device_state_ == kDeviceStateListening || device_state_ == kDeviceStateSpeaking) 
+        {
+            if(protocol_->Start())
+            {
+                ESP_LOGI(TAG, "Protocol started");
+            }
+            else
+            {
+                ESP_LOGE(TAG, "Failed to start protocol");
+                return;
+            }
+        }
+        else
+        {
+            ESP_LOGE(TAG, "Protocol not initialized");
+            return;
+        }
     }
     
     if (device_state_ == kDeviceStateIdle) {
